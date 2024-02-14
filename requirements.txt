@@ -1,2 +1,2 @@
-jupyterlab>=4.0
+jupyterlab
 srai[all]>=0.3
