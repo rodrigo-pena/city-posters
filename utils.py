@@ -64,14 +64,34 @@ def plot_rectangle_with_text(
 
 
 def plot_poster(gdf: gpd.GeoDataFrame,
-                city: str,
-                country: str,
-                with_text=True) -> plt.axes:
-    centroid = gdf.dissolve().centroid.item()
-    lat = dd2dms(centroid.y)
-    lng = dd2dms(centroid.x)
+                xlim=None,
+                ylim=None,
+                figsize=(8.27, 11.69)) -> plt.axes:
+    """Plot a poster of the given GeoDataFrame.
 
-    fig = plt.figure(figsize=(8.27, 11.69))
+    Parameters
+    ----------
+    gdf : gpd.GeoDataFrame
+        The GeoDataFrame to plot.
+    xlim : Tuple[float, float], optional
+        The x-axis limits, by default None
+    ylim : Tuple[float, float], optional
+        The y-axis limits, by default None
+    figsize : Tuple[float, float], optional
+        The figure size, by default (8.27, 11.69)
+
+    Returns
+    -------
+    plt.axes
+        The axes of the plot.
+    """
+    # TODO: allow user to specify:
+    # - background color
+    # - feature colors other than the default
+    # - line widths
+    # - font sizes
+    # - font colors
+    fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot()
     ax.set_position([0, 0, 1, 1])
 
@@ -86,26 +106,16 @@ def plot_poster(gdf: gpd.GeoDataFrame,
         markersize=0.1
     )
 
-    # Format coordinates string
-    ns = "N" if centroid.y >= 0 else "S"
-    ew = "E" if centroid.x >= 0 else "W"
-    coord_str = f"{abs(lat[0])}°{lat[1]}' {ns}, {abs(lng[0])}°{lng[1]}' {ew}"
-
-    if with_text:
-        # Draw city coordinates
-        plot_rectangle_with_text(
-            ax,
-            (0, 0.90),
-            coord_str,
-        )
-
-        # Draw city name
-        plot_rectangle_with_text(ax, (0, 0.15), city, country)
-
     # Set axes limits
     xmin, ymin, xmax, ymax = gdf.total_bounds
-    ax.set_xlim(xmin, xmax)
-    ax.set_ylim(ymin, ymax)
+    if xlim is not None:
+        ax.set_xlim(*xlim)
+    else:
+        ax.set_xlim(xmin, xmax)
+    if ylim is not None:
+        ax.set_ylim(*ylim)
+    else:
+        ax.set_ylim(ymin, ymax)
 
     ax.set_axis_off()
 
