@@ -64,6 +64,8 @@ def plot_rectangle_with_text(
 
 
 def plot_poster(gdf: gpd.GeoDataFrame,
+                feature_props=None,
+                background_color="#ecedea",
                 xlim=None,
                 ylim=None,
                 figsize=(8.27, 11.69)) -> plt.axes:
@@ -73,6 +75,16 @@ def plot_poster(gdf: gpd.GeoDataFrame,
     ----------
     gdf : gpd.GeoDataFrame
         The GeoDataFrame to plot.
+    feature_props : dict, optional
+        The properties of the features to plot, by default None. If None, the following properties are used:
+        {
+            "water": {"color": "#a8e1e6"},
+            "waterway": {"color": "#a8e1e6"},
+            "highway": {"color": "#181818"},
+        }
+        Each key is a feature name and each value is a dictionary with key-value argument pairs to pass to the gpd.GeoDataFrame.plot method.
+    background_color : str, optional
+        The background color, by default "#ecedea"
     xlim : Tuple[float, float], optional
         The x-axis limits, by default None
     ylim : Tuple[float, float], optional
@@ -85,26 +97,22 @@ def plot_poster(gdf: gpd.GeoDataFrame,
     plt.axes
         The axes of the plot.
     """
-    # TODO: allow user to specify:
-    # - background color
-    # - feature colors other than the default
-    # - line widths
-    # - font sizes
-    # - font colors
     fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot()
     ax.set_position([0, 0, 1, 1])
 
-    gdf.dropna(subset=["water", "waterway"], how="all").plot(
-        ax=ax,
-        color="#a8e1e6"
-    )
+    if feature_props is None:
+        feature_props = {
+            "water": {"color": "#a8e1e6"},
+            "waterway": {"color": "#a8e1e6"},
+            "highway": {"color": "#181818"},
+        }
 
-    gdf.dropna(subset=["highway"], how="all").plot(
-        ax=ax,
-        color="#181818",
-        markersize=0.1
-    )
+    for feature, props in feature_props.items():
+        gdf.dropna(subset=[feature], how="all").plot(
+            ax=ax,
+            **props
+        )
 
     # Set axes limits
     xmin, ymin, xmax, ymax = gdf.total_bounds
@@ -125,7 +133,7 @@ def plot_poster(gdf: gpd.GeoDataFrame,
             (0, 0),
             1,
             1,
-            facecolor="#ecedea",
+            facecolor=background_color,
             transform=ax.transAxes,
             zorder=-1
         )
