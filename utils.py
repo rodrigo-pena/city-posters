@@ -76,13 +76,15 @@ def plot_poster(gdf: gpd.GeoDataFrame,
     gdf : gpd.GeoDataFrame
         The GeoDataFrame to plot.
     feature_props : dict, optional
-        The properties of the features to plot, by default None. If None, the following properties are used:
+        The properties of the features to plot, by default None. If None,
+        the following properties are used:
         {
             "water": {"color": "#a8e1e6"},
             "waterway": {"color": "#a8e1e6"},
             "highway": {"color": "#181818"},
         }
-        Each key is a feature name and each value is a dictionary with key-value argument pairs to pass to the gpd.GeoDataFrame.plot method.
+        Each key is a feature name and each value is a dictionary with
+        key-value argument pairs to pass to the gpd.GeoDataFrame.plot method.
     background_color : str, optional
         The background color, by default "#ecedea"
     xlim : Tuple[float, float], optional
