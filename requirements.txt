@@ -1,2 +1,4 @@
+ipywidgets
 jupyterlab
-srai[all]>=0.3
+srai[plotting]>=0.3
+srai[osm]>=0.3
