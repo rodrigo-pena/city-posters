@@ -1,6 +1,9 @@
 """Utilities module"""
 
+import warnings
+
 import geopandas as gpd
+import numpy as np
 import matplotlib.pyplot as plt
 
 from typing import Tuple
@@ -75,8 +78,8 @@ def plot_rectangle_with_text(
 def plot_poster(gdf: gpd.GeoDataFrame,
                 feature_props=None,
                 background_color="#ecedea",
-                lat_lim=None,
                 lon_lim=None,
+                lat_lim=None,
                 figsize=(8.27, 11.69),
                 show_axis=False) -> plt.axes:
     """Plot a poster of the given GeoDataFrame.
@@ -175,17 +178,53 @@ def get_possible_feature_names():
     return possible_features
 
 
-def zoom(lat_min, lat_max, lon_min, lon_max, pin_center, zoom_level=1.0):
-    lat_center = pin_center[1]
+def zoom(lon_min, lat_min, lon_max, lat_max, pin_center, zoom_level=1.0):
+    """Zoom in on the given lat/lon range.
+
+    Parameters
+    ----------
+    lat_min : float
+        The minimum latitude.
+    lat_max : float
+        The maximum latitude.
+    lon_min : float
+        The minimum longitude.
+    lon_max : float
+        The maximum longitude.
+    pin_center : Tuple[float, float]
+        The center of the pin.
+    zoom_level : float or Tuple[float, float], optional
+        The zoom level, by default 1.0. It can be a float or a tuple with two
+        floats, the first for the longitude axis and the second for the
+        latitude axis.
+
+    Returns
+    -------
+    Tuple[float, float, float, float]
+        The new lat/lon range: `(lon_min, lat_min, lon_max, lat_max)`
+    """
+    # If zoom_level is not a tuple or a list, turn it into a tuple
+    try:
+        zoom_level = (zoom_level[0], zoom_level[1])
+    except TypeError or IndexError:
+        zoom_level = (zoom_level, zoom_level)
+
+    # Zoom in on longitude axis
     lon_center = pin_center[0]
-    lat_min = lat_center - (lat_center - lat_min) / zoom_level
-    lat_max = lat_center + (lat_max - lat_center) / zoom_level
-    lon_min = lon_center - (lon_center - lon_min) / zoom_level
-    lon_max = lon_center + (lon_max - lon_center) / zoom_level
-    return lat_min, lat_max, lon_min, lon_max
+    lon_diff = np.abs(lon_max - lon_min)
+    lon_min = lon_center - (lon_diff / 2) / zoom_level[0]
+    lon_max = lon_center + (lon_diff / 2) / zoom_level[0]
+
+    # Zoom in on latitude axis
+    lat_center = pin_center[1]
+    lat_diff = np.abs(lat_max - lat_min)
+    lat_min = lat_center - (lat_diff / 2) / zoom_level[1]
+    lat_max = lat_center + (lat_diff / 2) / zoom_level[1]
+
+    return lon_min, lat_min, lon_max, lat_max
 
 
-def parse_pin_center(pin_center, lat_min, lat_max, lon_min, lon_max):
+def parse_pin_center(pin_center, lon_min, lat_min, lon_max, lat_max):
     if pin_center is None:
         pin_center = [None, None]
     pin_center = list(pin_center)
