@@ -110,20 +110,6 @@ def main(config_name: str, output: str, paper_size: str, dpi: int):
         zoom_level
     )
 
-    # Fit the map to an A2 paper size
-    try:
-        orientation = properties["orientation"]
-    except KeyError:
-        orientation = "portrait"
-    lon_min, lat_min, lon_max, lat_max = utils.fit_to_paper(
-        lon_min,
-        lat_min,
-        lon_max,
-        lat_max,
-        paper_size=paper_size,
-        orientation=orientation
-    )
-
     # Set figure size in inches
     page_length, page_width = paper_dimensions
     figsize = (page_length / 25.4, page_width / 25.4)
