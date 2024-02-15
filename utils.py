@@ -4,6 +4,15 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 
 from typing import Tuple
+from srai.loaders.osm_loaders.filters import BASE_OSM_GROUPS_FILTER
+
+PAPER_SIZES = {
+    "A0": (1189, 841),  # (height, width) in mm
+    "A1": (841, 594),   # (height, width) in mm
+    "A2": (594, 420),   # (height, width) in mm
+    "A3": (420, 297),   # (height, width) in mm
+    "A4": (297, 210),   # (height, width) in mm
+}
 
 
 def dd2dms(deg):
@@ -66,9 +75,10 @@ def plot_rectangle_with_text(
 def plot_poster(gdf: gpd.GeoDataFrame,
                 feature_props=None,
                 background_color="#ecedea",
-                xlim=None,
-                ylim=None,
-                figsize=(8.27, 11.69)) -> plt.axes:
+                lat_lim=None,
+                lon_lim=None,
+                figsize=(8.27, 11.69),
+                show_axis=False) -> plt.axes:
     """Plot a poster of the given GeoDataFrame.
 
     Parameters
@@ -76,23 +86,19 @@ def plot_poster(gdf: gpd.GeoDataFrame,
     gdf : gpd.GeoDataFrame
         The GeoDataFrame to plot.
     feature_props : dict, optional
-        The properties of the features to plot, by default None. If None,
-        the following properties are used:
-        {
-            "water": {"color": "#a8e1e6"},
-            "waterway": {"color": "#a8e1e6"},
-            "highway": {"color": "#181818"},
-        }
-        Each key is a feature name and each value is a dictionary with
-        key-value argument pairs to pass to the gpd.GeoDataFrame.plot method.
+        The properties of the features to plot, by default None. If None, the
+        default properties are used. See `get_default_feature_props` for the
+        default properties.
     background_color : str, optional
         The background color, by default "#ecedea"
-    xlim : Tuple[float, float], optional
-        The x-axis limits, by default None
-    ylim : Tuple[float, float], optional
-        The y-axis limits, by default None
+    lat_lim : Tuple[float, float], optional
+        Latitude limits (min, max), by default None
+    lon_lim : Tuple[float, float], optional
+        Longitude limits (min, max), by default None
     figsize : Tuple[float, float], optional
         The figure size, by default (8.27, 11.69)
+    show_axis : bool, optional
+        Whether to show the axis, by default False
 
     Returns
     -------
@@ -104,11 +110,7 @@ def plot_poster(gdf: gpd.GeoDataFrame,
     ax.set_position([0, 0, 1, 1])
 
     if feature_props is None:
-        feature_props = {
-            "water": {"color": "#a8e1e6"},
-            "waterway": {"color": "#a8e1e6"},
-            "highway": {"color": "#181818"},
-        }
+        feature_props = get_default_feature_props()
 
     for feature, props in feature_props.items():
         gdf.dropna(subset=[feature], how="all").plot(
@@ -117,17 +119,18 @@ def plot_poster(gdf: gpd.GeoDataFrame,
         )
 
     # Set axes limits
-    xmin, ymin, xmax, ymax = gdf.total_bounds
-    if xlim is not None:
-        ax.set_xlim(*xlim)
+    lon_min, lat_min, lon_max, lat_max = gdf.total_bounds
+    if lat_lim is not None:
+        ax.set_xlim(*lon_lim)
     else:
-        ax.set_xlim(xmin, xmax)
-    if ylim is not None:
-        ax.set_ylim(*ylim)
+        ax.set_xlim(lon_min, lon_max)
+    if lon_lim is not None:
+        ax.set_ylim(*lat_lim)
     else:
-        ax.set_ylim(ymin, ymax)
+        ax.set_ylim(lat_min, lat_max)
 
-    ax.set_axis_off()
+    if not show_axis:
+        ax.set_axis_off()
 
     # Draw background rectangle
     ax.add_patch(
@@ -143,4 +146,51 @@ def plot_poster(gdf: gpd.GeoDataFrame,
 
     ax.margins(0, 0)
 
-    return ax
+    return fig, ax
+
+
+def get_default_feature_props():
+    return {
+        "water": {"color": "#a8e1e6"},
+        "waterway": {"color": "#a8e1e6"},
+        "highway": {
+            "color": "#181818",
+            "linewidth": 0.5,
+            "markersize": 0.5,
+        },
+    }
+
+
+def get_possible_feature_names():
+    possible_features = []
+    for key in BASE_OSM_GROUPS_FILTER.keys():
+        possible_features.append(key)
+        for child_key in BASE_OSM_GROUPS_FILTER[key].keys():
+            possible_features.append(child_key)
+            try:
+                for item in BASE_OSM_GROUPS_FILTER[key][child_key]:
+                    possible_features.append(item)
+            except TypeError:
+                pass
+    return possible_features
+
+
+def zoom(lat_min, lat_max, lon_min, lon_max, pin_center, zoom_level=1.0):
+    lat_center = pin_center[1]
+    lon_center = pin_center[0]
+    lat_min = lat_center - (lat_center - lat_min) / zoom_level
+    lat_max = lat_center + (lat_max - lat_center) / zoom_level
+    lon_min = lon_center - (lon_center - lon_min) / zoom_level
+    lon_max = lon_center + (lon_max - lon_center) / zoom_level
+    return lat_min, lat_max, lon_min, lon_max
+
+
+def parse_pin_center(pin_center, lat_min, lat_max, lon_min, lon_max):
+    if pin_center is None:
+        pin_center = [None, None]
+    pin_center = list(pin_center)
+    if pin_center[0] is None:
+        pin_center[0] = (lon_min + lon_max) / 2
+    if pin_center[1] is None:
+        pin_center[1] = (lat_min + lat_max) / 2
+    return pin_center
