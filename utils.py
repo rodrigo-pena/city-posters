@@ -4,6 +4,7 @@ import geopandas as gpd
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 from srai.loaders.osm_loaders.filters import BASE_OSM_GROUPS_FILTER
 
 PAPER_SIZES = {
@@ -33,7 +34,8 @@ def plot_poster(gdf: gpd.GeoDataFrame,
         default properties are used. See `get_default_feature_props` for the
         default properties.
     background_color : str, optional
-        The background color, by default "#ecedea"
+        The background color, by default "#ecedea". If None, no background is
+        drawn.
     lat_lim : Tuple[float, float], optional
         Latitude limits (min, max), by default None
     lon_lim : Tuple[float, float], optional
@@ -76,16 +78,17 @@ def plot_poster(gdf: gpd.GeoDataFrame,
         ax.set_axis_off()
 
     # Draw background rectangle
-    ax.add_patch(
-        plt.Rectangle(
-            (0, 0),
-            1,
-            1,
-            facecolor=background_color,
-            transform=ax.transAxes,
-            zorder=-1
+    if background_color is not None:
+        ax.add_patch(
+            plt.Rectangle(
+                (0, 0),
+                1,
+                1,
+                facecolor=background_color,
+                transform=ax.transAxes,
+                zorder=-1
+            )
         )
-    )
 
     ax.margins(0, 0)
 
@@ -116,6 +119,10 @@ def get_possible_feature_names():
             except TypeError:
                 pass
     return possible_features
+
+
+def get_default_background_color():
+    return "#ecedea"
 
 
 def zoom(lon_min, lat_min, lon_max, lat_max, pin_center, zoom_level=1.0):
