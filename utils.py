@@ -4,7 +4,6 @@ import geopandas as gpd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from typing import Tuple
 from srai.loaders.osm_loaders.filters import BASE_OSM_GROUPS_FILTER
 
 PAPER_SIZES = {
@@ -14,63 +13,6 @@ PAPER_SIZES = {
     "A3": (420, 297),   # (height, width) in mm
     "A4": (297, 210),   # (height, width) in mm
 }
-
-
-def dd2dms(deg):
-    d = int(deg)
-    md = abs(deg - d) * 60
-    m = int(md)
-    sd = (md - m) * 60
-    return [d, m, sd]
-
-
-def plot_rectangle_with_text(
-    ax: plt.Axes,
-    coords: Tuple[float, float],
-    title: str,
-    subtitle: str = "",
-):
-    width = 1.0
-    height = 0.085
-    fontsize_title = 45
-    fontsize_subtitle = 15
-
-    rectangle = plt.Rectangle(
-        coords,
-        width,
-        height,
-        facecolor="#ecedea",
-        alpha=0.8,
-        transform=ax.transAxes,
-        zorder=2,
-    )
-
-    ax.add_patch(rectangle)
-    rx, ry = rectangle.get_xy()
-    cx = rx + rectangle.get_width() / 2.0
-    cy = ry + rectangle.get_height() / 2.0
-
-    ax.text(
-        cx,
-        cy,
-        title,
-        fontsize=fontsize_title,
-        transform=ax.transAxes,
-        horizontalalignment="center",
-        verticalalignment="center",
-        color="#2b2b2b",
-    )
-
-    ax.text(
-        cx,
-        cy - 0.032,
-        subtitle,
-        fontsize=fontsize_subtitle,
-        transform=ax.transAxes,
-        horizontalalignment="center",
-        verticalalignment="center",
-        color="#2b2b2b",
-    )
 
 
 def plot_poster(gdf: gpd.GeoDataFrame,
