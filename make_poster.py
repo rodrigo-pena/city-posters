@@ -91,23 +91,37 @@ def main(config_name: str, output: str, paper_size: str, dpi: int):
     except KeyError:
         pin_center = [None, None]
     pin_center = utils.parse_pin_center(pin_center,
-                                        lat_min,
-                                        lat_max,
                                         lon_min,
-                                        lon_max)
+                                        lat_min,
+                                        lon_max,
+                                        lat_max)
 
     # Transform coordinates according to zoom level
     try:
-        zoom = properties["zoom"]
+        zoom_level = properties["zoom_level"]
     except KeyError:
-        zoom = 1.
-    lat_min, lat_max, lon_min, lon_max = utils.zoom(
-        lat_min,
-        lat_max,
+        zoom_level = 1.
+    lon_min, lat_min, lon_max, lat_max = utils.zoom(
         lon_min,
+        lat_min,
         lon_max,
+        lat_max,
         pin_center,
-        zoom
+        zoom_level
+    )
+
+    # Fit the map to an A2 paper size
+    try:
+        orientation = properties["orientation"]
+    except KeyError:
+        orientation = "portrait"
+    lon_min, lat_min, lon_max, lat_max = utils.fit_to_paper(
+        lon_min,
+        lat_min,
+        lon_max,
+        lat_max,
+        paper_size=paper_size,
+        orientation=orientation
     )
 
     # Set figure size in inches
@@ -121,8 +135,8 @@ def main(config_name: str, output: str, paper_size: str, dpi: int):
     fig, _ = utils.plot_poster(
         features,
         feature_props=feature_props,
-        lat_lim=(lat_min, lat_max),
         lon_lim=(lon_min, lon_max),
+        lat_lim=(lat_min, lat_max),
         figsize=figsize,
     )
 
