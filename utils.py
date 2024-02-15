@@ -1,7 +1,5 @@
 """Utilities module"""
 
-import warnings
-
 import geopandas as gpd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -233,70 +231,3 @@ def parse_pin_center(pin_center, lon_min, lat_min, lon_max, lat_max):
     if pin_center[1] is None:
         pin_center[1] = (lat_min + lat_max) / 2
     return pin_center
-
-
-def fit_to_paper(lon_min,
-                 lat_min,
-                 lon_max,
-                 lat_max,
-                 paper_size,
-                 orientation="portrait"):
-    """Fit the given lat/lon range to the given paper size.
-
-    Parameters
-    ----------
-    lon_min : float
-        The minimum longitude.
-    lat_min : float
-        The minimum latitude.
-    lon_max : float
-        The maximum longitude.
-    lat_max : float
-        The maximum latitude.
-    paper_size : str
-        The paper size. It has to be one of the keys in `PAPER_SIZES`
-    orientation : str, optional
-        The paper orientation, by default "portrait". Can also be "landscape".
-
-    Returns
-    -------
-    Tuple[float, float, float, float]
-        The new lat/lon range: `(lon_min, lat_min, lon_max, lat_max)`
-    """
-    # Get paper dimensions
-    paper_size = paper_size.upper()
-    paper_dimensions = PAPER_SIZES[paper_size]
-
-    # Get lat/lon range dimensions
-    lon_diff = np.abs(lon_max - lon_min)
-    lat_diff = np.abs(lat_max - lat_min)
-
-    # Get lat/lon range aspect ratio
-    lon_lat_ratio = lon_diff / lat_diff
-
-    # Get paper aspect ratio
-    paper_ratio = paper_dimensions[1] / paper_dimensions[0]
-
-    if orientation == "landscape":
-        paper_ratio = 1 / paper_ratio
-    elif orientation == "portrait":
-        pass
-    else:
-        warnings.warn(f"Orientation {orientation} not recognized. Using " +
-                      "portrait orientation.")
-
-    # Adjust lat/lon range to paper aspect ratio
-    if lon_lat_ratio > paper_ratio:
-        lon_diff = lat_diff * paper_ratio
-    else:
-        lat_diff = lon_diff / paper_ratio
-
-    # Get new lat/lon range
-    lon_center = (lon_min + lon_max) / 2
-    lat_center = (lat_min + lat_max) / 2
-    lon_min = lon_center - lon_diff / 2
-    lon_max = lon_center + lon_diff / 2
-    lat_min = lat_center - lat_diff / 2
-    lat_max = lat_center + lat_diff / 2
-
-    return lon_min, lat_min, lon_max, lat_max
