@@ -22,7 +22,7 @@ config = {
         "country": "Poland",
         "zoom_level": .9,
         "orientation": "portrait",
-        "background_color": "#ecedea",
+        "background_color": None,
     },
     "warsaw": {
         "city": "Warsaw",
