@@ -11,15 +11,6 @@ from srai.loaders import OSMPbfLoader
 
 warnings.simplefilter("ignore")
 
-# Paper sizes
-paper_sizes = {
-    "A0": (1189, 841),  # (height, width) in mm
-    "A1": (841, 594),   # (height, width) in mm
-    "A2": (594, 420),   # (height, width) in mm
-    "A3": (420, 297),   # (height, width) in mm
-    "A4": (297, 210),   # (height, width) in mm
-}
-
 
 @click.command()
 @click.option(
@@ -54,10 +45,10 @@ def main(config_name: str, output: str, paper_size: str, dpi: int):
     # Get paper size
     try:
         paper_size = paper_size.upper()
-        paper_dimensions = paper_sizes[paper_size]
+        paper_dimensions = utils.PAPER_SIZES[paper_size]
     except KeyError:
         raise ValueError(f"Paper size {paper_size} not found." +
-                         f" Options are: {list(paper_sizes.keys())}")
+                         f" Options are: {list(utils.PAPER_SIZES.keys())}")
 
     # Get area
     print(f"Getting area for {properties['city']}, {properties['country']}...")
@@ -118,9 +109,14 @@ def main(config_name: str, output: str, paper_size: str, dpi: int):
     print(
         f"Plotting poster for {properties['city']}, {properties['country']}..."
     )
+    try:
+        background_color = properties["background_color"]
+    except KeyError:
+        background_color = utils.get_default_background_color()
     fig, _ = utils.plot_poster(
         features,
         feature_props=feature_props,
+        background_color=background_color,
         lon_lim=(lon_min, lon_max),
         lat_lim=(lat_min, lat_max),
         figsize=figsize,
