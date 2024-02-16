@@ -51,9 +51,13 @@ def main(config_name: str, output: str, paper_size: str, dpi: int):
                          f" Options are: {list(utils.PAPER_SIZES.keys())}")
 
     # Get area
-    print(f"Getting area for {properties['city']}, {properties['country']}...")
-    area_name = f"{properties['city']}, {properties['country']}"
-    area = geocode_to_region_gdf(area_name)
+    query = properties["query"]
+    try:
+        by_osmid = properties["by_osmid"]
+    except KeyError:
+        by_osmid = False
+    print(f"Getting area {query}, by OSM ID = {by_osmid}...")
+    area = geocode_to_region_gdf(query, by_osmid=by_osmid)
 
     # Parse feature properties
     try:
@@ -107,7 +111,7 @@ def main(config_name: str, output: str, paper_size: str, dpi: int):
 
     # Plot the poster
     print(
-        f"Plotting poster for {properties['city']}, {properties['country']}..."
+        f"Plotting poster for {query}..."
     )
     try:
         background_color = properties["background_color"]
