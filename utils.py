@@ -4,7 +4,6 @@ import geopandas as gpd
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 from srai.loaders.osm_loaders.filters import BASE_OSM_GROUPS_FILTER
 
 PAPER_SIZES = {
