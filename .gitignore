@@ -1,3 +1,4 @@
+# Ignore the following files
 .DS_Store
 __pycache__/
 cache/
@@ -5,3 +6,5 @@ files/
 *.png
 *.pdf
 
+# Do not ignore the following files
+!example_poster.png
