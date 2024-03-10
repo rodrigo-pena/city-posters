@@ -1,82 +1,94 @@
 """Utilities module"""
 
-import geopandas as gpd
-import numpy as np
-import matplotlib.pyplot as plt
+from typing import Tuple
 
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import numpy as np
 from srai.loaders.osm_loaders.filters import BASE_OSM_GROUPS_FILTER
 
 PAPER_SIZES = {
     "A0": (1189, 841),  # (height, width) in mm
-    "A1": (841, 594),   # (height, width) in mm
-    "A2": (594, 420),   # (height, width) in mm
-    "A3": (420, 297),   # (height, width) in mm
-    "A4": (297, 210),   # (height, width) in mm
+    "A1": (841, 594),  # (height, width) in mm
+    "A2": (594, 420),  # (height, width) in mm
+    "A3": (420, 297),  # (height, width) in mm
+    "A4": (297, 210),  # (height, width) in mm
 }
 
 
-def plot_poster(gdf: gpd.GeoDataFrame,
-                feature_props=None,
-                background_color="#ecedea",
-                lon_lim=None,
-                lat_lim=None,
-                figsize=(8.27, 11.69),
-                show_axis=False) -> plt.axes:
+def plot_poster(
+    gdf_and_features: Tuple[gpd.GeoDataFrame, dict],
+    background_color="#ecedea",
+    lon_lat_lims=None,
+    figsize=(8.27, 11.69),
+) -> Tuple[plt.Figure, plt.Axes]:
     """Plot a poster of the given GeoDataFrame.
 
     Parameters
     ----------
-    gdf : gpd.GeoDataFrame
-        The GeoDataFrame to plot.
-    feature_props : dict, optional
-        The properties of the features to plot, by default None. If None, the
-        default properties are used. See `get_default_feature_props` for the
-        default properties.
+    gdf_and_features : Tuple[gpd.GeoDataFrame, dict]
+        A tuple with the GeoDataFrame and a dictionary with the feature
+        properties.
     background_color : str, optional
         The background color, by default "#ecedea". If None, no background is
         drawn.
-    lat_lim : Tuple[float, float], optional
-        Latitude limits (min, max), by default None
-    lon_lim : Tuple[float, float], optional
-        Longitude limits (min, max), by default None
+    lon_lat_lims : Tuple[float, float, float, float], optional
+        The lon/lat limits of the plot, by default None. If None, the total
+        bounds of the GeoDataFrame are used.
     figsize : Tuple[float, float], optional
         The figure size, by default (8.27, 11.69)
-    show_axis : bool, optional
-        Whether to show the axis, by default False
 
     Returns
     -------
-    plt.axes
-        The axes of the plot.
+    Tuple[plt.Figure, plt.Axes]
+        The figure and the axes of the plot.
     """
+    gdf, feature_props = gdf_and_features
+
+    fig, ax = create_figure(figsize)
+
+    set_plot_position(ax)
+    set_feature_props(gdf, feature_props, ax)
+
+    if lon_lat_lims is None:
+        lon_lat_lims = gdf.total_bounds
+    set_axes_limits(lon_lat_lims, ax)
+    set_axis_visibility(ax, False)
+    draw_background(background_color, ax)
+
+    return fig, ax
+
+
+def create_figure(figsize):
     fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot()
+    return fig, ax
+
+
+def set_plot_position(ax):
     ax.set_position([0, 0, 1, 1])
 
+
+def set_feature_props(gdf, feature_props, ax):
     if feature_props is None:
         feature_props = get_default_feature_props()
 
     for feature, props in feature_props.items():
-        gdf.dropna(subset=[feature], how="all").plot(
-            ax=ax,
-            **props
-        )
+        gdf.dropna(subset=[feature], how="all").plot(ax=ax, **props)
 
-    # Set axes limits
-    lon_min, lat_min, lon_max, lat_max = gdf.total_bounds
-    if lat_lim is not None:
-        ax.set_xlim(*lon_lim)
-    else:
-        ax.set_xlim(lon_min, lon_max)
-    if lon_lim is not None:
-        ax.set_ylim(*lat_lim)
-    else:
-        ax.set_ylim(lat_min, lat_max)
 
+def set_axes_limits(lon_lat_lims, ax):
+    lon_min, lat_min, lon_max, lat_max = lon_lat_lims
+    ax.set_xlim(lon_min, lon_max)
+    ax.set_ylim(lat_min, lat_max)
+
+
+def set_axis_visibility(ax, show_axis):
     if not show_axis:
         ax.set_axis_off()
 
-    # Draw background rectangle
+
+def draw_background(background_color, ax):
     if background_color is not None:
         ax.add_patch(
             plt.Rectangle(
@@ -85,13 +97,9 @@ def plot_poster(gdf: gpd.GeoDataFrame,
                 1,
                 facecolor=background_color,
                 transform=ax.transAxes,
-                zorder=-1
+                zorder=-1,
             )
         )
-
-    ax.margins(0, 0)
-
-    return fig, ax
 
 
 def get_default_feature_props():
@@ -124,19 +132,13 @@ def get_default_background_color():
     return "#ecedea"
 
 
-def zoom(lon_min, lat_min, lon_max, lat_max, pin_center, zoom_level=1.0):
+def zoom(lon_lat_lims, pin_center, zoom_level=1.0):
     """Zoom in on the given lat/lon range.
 
     Parameters
     ----------
-    lat_min : float
-        The minimum latitude.
-    lat_max : float
-        The maximum latitude.
-    lon_min : float
-        The minimum longitude.
-    lon_max : float
-        The maximum longitude.
+    lon_lat_lims : Tuple[float, float, float, float]
+        The lat/lon range: `(lon_min, lat_min, lon_max, lat_max)`
     pin_center : Tuple[float, float]
         The center of the pin.
     zoom_level : float or Tuple[float, float], optional
@@ -155,6 +157,9 @@ def zoom(lon_min, lat_min, lon_max, lat_max, pin_center, zoom_level=1.0):
     except TypeError or IndexError:
         zoom_level = (zoom_level, zoom_level)
 
+    # Unpack the lat/lon limits
+    lon_min, lat_min, lon_max, lat_max = lon_lat_lims
+
     # Zoom in on longitude axis
     lon_center = pin_center[0]
     lon_diff = np.abs(lon_max - lon_min)
@@ -170,7 +175,8 @@ def zoom(lon_min, lat_min, lon_max, lat_max, pin_center, zoom_level=1.0):
     return lon_min, lat_min, lon_max, lat_max
 
 
-def parse_pin_center(pin_center, lon_min, lat_min, lon_max, lat_max):
+def parse_pin_center(pin_center, lon_lat_lims):
+    lon_min, lat_min, lon_max, lat_max = lon_lat_lims
     if pin_center is None:
         pin_center = [None, None]
     pin_center = list(pin_center)
